@@ -1,11 +1,24 @@
+#!/usr/bin/env bash
+
+# The script exports the build version for the project.
+# The build version can be one of the following:
+# - <commit>-dirty: if the working directory has uncommitted changes
+# - <commit>: if the current commit is not tagged
+# - <tag>: if the current commit is tagged
+
 export-build-version() {
-	dirtySuffix=$([[ -n "$(git status --porcelain)" ]] && echo "+dirty")
-	tagVersion=$(git tag --points-at HEAD | head -n1)
 	commitVersion=$(git rev-parse --short=4 HEAD)
+	tagVersion=$(git tag --points-at HEAD | head -n1)
+
+	if [[ -n "$(git status --porcelain)" ]]; then
+		export EXPENSLER_BUILD_VERSION="${commitVersion}-dirty"
+		return
+	fi
 
 	if [[ -n "$tagVersion" ]]; then
-		export EXPENSLER_BUILD_VERSION="${tagVersion}${dirtySuffix}"
-	else
-		export EXPENSLER_BUILD_VERSION="${commitVersion}${dirtySuffix}"
+		export EXPENSLER_BUILD_VERSION="${tagVersion}"
+		return
 	fi
+
+	export EXPENSLER_BUILD_VERSION="${commitVersion}"
 }
